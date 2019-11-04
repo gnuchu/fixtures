@@ -2,3 +2,4 @@
 database/*.db
 fixtures.csv
 fixtures.xlsx
+fixtures.json

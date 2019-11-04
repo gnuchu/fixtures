@@ -17,8 +17,7 @@ def load_secrets(path):
     except yaml.YAMLError as exc:
       print(exc)
   
-  return secrets`
-
+  return secrets
 
 def is_stale(file):
   # Define stale as not updated since yesterday or not present.
@@ -53,7 +52,7 @@ def process_fixture(gameday, fixture):
   row = [gameday, date_str, time_str, hometeam, awayteam]
   return row
 
-def request_new_data():
+def request_new_data(json_file_path):
   headers = {}
   headers['x-rapidapi-host'] = api_host
   headers['x-rapidapi-key'] = api_key
@@ -62,13 +61,13 @@ def request_new_data():
   response = requests.request(api_method, url_to_get, headers=headers)
   j = json.loads(response.text)
   # Save the data off just in case
-  f = open('fixtures.json', 'w')
+  f = open(json_file_path, 'w')
   f.write(json.dumps(j))
   f.close()
 
   return j
 
-def process_fixtures(json_data):
+def process_fixtures(json_data, xlsx_file_path):
   i = 0
 # Process fixtures
   wb = Workbook()
@@ -83,12 +82,12 @@ def process_fixtures(json_data):
       continue
 
     i += 1
-    row = process_fixture(fixture)
+    row = process_fixture(i, fixture)
 
     row = [str(i), date_str, time_str, hometeam, awayteam]
     ws.append(row)
 
-  wb.save("fixtures.xlsx")
+  wb.save(xlsx_file_path)
 ################
 # Start
 ################
@@ -103,14 +102,18 @@ secrets_file_path = '.secrests.yaml'
 secrets = load_secrets(secrets_file_path)
 api_key = secrets['api_key']
 
-if os.path.exists('fixtures.json') and is_stale('fixtures.json'):
+json_file_path = 'output/fixtures.json'
+xlsx_file_path = 'output/fixtures.xlsx'
+
+
+if os.path.exists(json_file_path) == True and is_stale(json_file_path) == False:
   print("Loading from file...")
-  with open('fixtures.json') as f:
+  with open(json_file_path) as f:
     json_data = json.load(f)
 else:
   print("Loading form Web...")
-  json_data = request_new_data()
+  json_data = request_new_data(json_file_path)
 
-process_fixtures(json_data)
+process_fixtures(json_data, xlsx_file_path)
 
 
