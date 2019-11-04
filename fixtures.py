@@ -1,16 +1,24 @@
+# Run pip install -r requirements.txt on first install
+
 import requests
 import json
 import os.path
-from datetime import datetime, timedelta
+from datetime import datetime
+from datetime import timedelta
 import time
 from openpyxl import Workbook
 import sqlite3
 import yaml
+import sys
 
 ################
 # Functions
 ################
 def load_secrets(path):
+  if os.path.exists(path) == False:
+    print('Need to create secrets file: {path}')
+    sys.exit(1)
+
   with open(path, 'r') as stream:
     try:
       secrets = yaml.load(stream, Loader=yaml.FullLoader)
