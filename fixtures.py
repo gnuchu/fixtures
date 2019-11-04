@@ -83,8 +83,6 @@ def process_fixtures(json_data, xlsx_file_path):
 
     i += 1
     row = process_fixture(i, fixture)
-
-    row = [str(i), date_str, time_str, hometeam, awayteam]
     ws.append(row)
 
   wb.save(xlsx_file_path)
@@ -98,13 +96,12 @@ api_base_url = 'https://api-football-v1.p.rapidapi.com/v2'
 api_service = '/fixtures/team/'
 team_id = '186'
 
-secrets_file_path = '.secrests.yaml'
+secrets_file_path = '.secrets.yaml'
 secrets = load_secrets(secrets_file_path)
 api_key = secrets['api_key']
 
 json_file_path = 'output/fixtures.json'
-xlsx_file_path = 'output/fixtures.xlsx'
-
+xlsx_file_path = 'output/fixtures' + datetime.now().strftime('%Y%m%d%H%M%S') + '.xslx'
 
 if os.path.exists(json_file_path) == True and is_stale(json_file_path) == False:
   print("Loading from file...")

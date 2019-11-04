@@ -1,0 +1,6 @@
+# TODO
+
+- Add storing each row to a database
+- Start running via cron on server once a day
+- Email any errors to admin
+- When new fixtures are available send out a new spreadsheet
