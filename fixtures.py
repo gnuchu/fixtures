@@ -223,7 +223,7 @@ api_key = secrets['api_key']
 
 json_file_path = 'output/fixtures.json'
 html_file_path = 'output/fixtures.html'
-xlsx_file_path = 'output/fixtures' + datetime.now().strftime('%Y%m%d%H%M%S') + '.xslx'
+xlsx_file_path = 'output/fixtures' + datetime.now().strftime('%Y%m%d%H%M%S') + '.xlsx'
 
 if os.path.exists(json_file_path) == True and is_stale(json_file_path) == False:
   print("Loading from file...")
