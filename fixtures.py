@@ -14,6 +14,79 @@ import sys
 ################
 # Functions
 ################
+def read_templates():
+  templates = {}
+  header = ""
+  footer = ""
+  thead = ""
+  tfoot = ""
+
+  with open('templates/header.html') as f:
+    header = f.read()
+  with open('templates/footer.html') as f:
+    footer = f.read()
+  with open('templates/tableheader.html') as f:
+    thead = f.read()
+  with open('templates/tablefooter.html') as f:
+    tfoot = f.read()
+
+  templates['header'] = header
+  templates['footer'] = footer
+  templates['thead'] = thead
+  templates['tfoot'] = tfoot
+  return templates
+
+def build_html(json, outputfile):
+  templates = read_templates()
+  html = ""
+  html += templates['header']
+  html += templates['thead']
+  currentpoints = 0
+  i = 0
+
+  for fixture in json_data['api']['fixtures']:
+    league_id = int(fixture['league_id'])
+    if league_id != 755:
+      continue
+    
+    i += 1
+
+    row = process_fixture(i, fixture, currentpoints)
+    gameday = row[0]
+    gamedate = row[1]
+    gametime  = row[2]
+    hometeam = row[3]
+    awayteam = row[4]
+    homescore = row[5]
+    awayscore = row[6]
+    result = row[7]
+    if result == 'Win':
+      currentpoints += 3
+    elif result == 'Draw':
+      currentpoints += 1
+    
+    if homescore == '':
+      currentpoints = ''
+
+    htmlrow = f"""<tr>
+      <td>{gameday}</td>
+      <td>{hometeam}</td>
+      <td>{homescore}</td>
+      <td>{awayscore}</td>
+      <td>{awayteam}</td>
+      <td>{gamedate}</td>
+      <td>{gametime}</td>
+      <td>{result}</td>
+      <td>{currentpoints}</td>
+    </tr>"""
+    html+=htmlrow
+
+  html += templates['tfoot']
+  html += templates['footer']
+
+  with open(outputfile, 'w') as f:
+    f.write(html)
+
 def load_secrets(path):
   if os.path.exists(path) == False:
     print('Need to create secrets file: {path}')
@@ -48,7 +121,32 @@ def get_modified_time(file):
 
   return date_o
 
-def process_fixture(gameday, fixture):
+def calculate_result(homescore, awayscore, homeoraway):
+  home = int(homescore)
+  away = int(awayscore)
+  
+  if home == away:
+    return 'Draw'
+  
+  if homeoraway == 'H':
+    if home > away:
+      return 'Win'
+    else:
+      return 'Loss'
+  else:
+    if home > away:
+      return 'Loss'
+    else:
+      return 'Win'
+
+  
+def home_or_away(fixture):
+  if int(fixture['homeTeam']['team_id']) == int(st_pauli_team_id):
+    return 'H'
+  else:
+    return 'A'
+
+def process_fixture(gameday, fixture, currentpoints):
   matchdate = fixture['event_date']
   hometeam = fixture['homeTeam']['team_name']
   awayteam = fixture['awayTeam']['team_name']
@@ -57,7 +155,21 @@ def process_fixture(gameday, fixture):
   date_str = date_o.strftime("%d/%m/%Y")
   time_str = date_o.strftime("%H:%M:%S")
 
-  row = [gameday, date_str, time_str, hometeam, awayteam]
+  if fixture['score']['fulltime'] == None:
+    homescore = ""
+    awayscore = ""
+    result = ""
+  else:
+    score = fixture['score']['fulltime']
+    (homescore,awayscore) = score.split('-')
+    homeoraway = home_or_away(fixture)
+    result = calculate_result(homescore, awayscore, homeoraway)
+    if result == 'Draw':
+      currentpoints += 1
+    elif result == 'Win':
+      currentpoints += 3
+  
+  row = [gameday, date_str, time_str, hometeam, awayteam, homescore, awayscore, result, currentpoints]
   return row
 
 def request_new_data(json_file_path):
@@ -65,7 +177,7 @@ def request_new_data(json_file_path):
   headers['x-rapidapi-host'] = api_host
   headers['x-rapidapi-key'] = api_key
 
-  url_to_get = api_base_url + api_service + team_id
+  url_to_get = api_base_url + api_service + st_pauli_team_id
   response = requests.request(api_method, url_to_get, headers=headers)
   j = json.loads(response.text)
   # Save the data off just in case
@@ -77,12 +189,13 @@ def request_new_data(json_file_path):
 
 def process_fixtures(json_data, xlsx_file_path):
   i = 0
-# Process fixtures
+  # Process fixtures
   wb = Workbook()
   ws = wb.active
   ws.title = 'Fixtures'
+  currentpoints = 0
   #Write headers
-  ws.append(['Game Day', 'Date', 'Time', 'Home', 'Away'])
+  ws.append(['Game Day', 'Date', 'Time', 'Home', 'Away', 'Home Score', 'Away Score', 'Points'])
 
   for fixture in json_data['api']['fixtures']:
     league_id = int(fixture['league_id'])
@@ -90,7 +203,7 @@ def process_fixtures(json_data, xlsx_file_path):
       continue
 
     i += 1
-    row = process_fixture(i, fixture)
+    row = process_fixture(i, fixture, currentpoints)
     ws.append(row)
 
   wb.save(xlsx_file_path)
@@ -102,13 +215,14 @@ api_host = 'api-football-v1.p.rapidapi.com'
 api_method = 'GET'
 api_base_url = 'https://api-football-v1.p.rapidapi.com/v2'
 api_service = '/fixtures/team/'
-team_id = '186'
+st_pauli_team_id = '186'
 
 secrets_file_path = '.secrets.yaml'
 secrets = load_secrets(secrets_file_path)
 api_key = secrets['api_key']
 
 json_file_path = 'output/fixtures.json'
+html_file_path = 'output/fixtures.html'
 xlsx_file_path = 'output/fixtures' + datetime.now().strftime('%Y%m%d%H%M%S') + '.xslx'
 
 if os.path.exists(json_file_path) == True and is_stale(json_file_path) == False:
@@ -120,5 +234,6 @@ else:
   json_data = request_new_data(json_file_path)
 
 process_fixtures(json_data, xlsx_file_path)
+build_html(json_data, html_file_path)
 
 
