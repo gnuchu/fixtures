@@ -106,7 +106,7 @@ def is_stale(file):
     return True
   
   lastModifiedDatetime = get_modified_time(file)
-  staleDate = datetime.now() + timedelta(days=-1)
+  staleDate = datetime.now() + timedelta(hours=-1)
 
   if lastModifiedDatetime < staleDate:
     return True
@@ -187,7 +187,7 @@ def request_new_data(json_file_path):
 
   return j
 
-def process_fixtures(json_data, xlsx_file_path):
+def process_fixtures(json_data, xlsx_file_path, conn):
   i = 0
   # Process fixtures
   wb = Workbook()
@@ -205,8 +205,35 @@ def process_fixtures(json_data, xlsx_file_path):
     i += 1
     row = process_fixture(i, fixture, currentpoints)
     ws.append(row)
+    insert_row(conn, row)
 
   wb.save(xlsx_file_path)
+
+def run_sql(conn, sql):
+  print(sql)
+  c = conn.cursor()
+  c.execute(sql)
+  conn.commit()
+
+def drop_database(conn):
+  run_sql(conn, 'delete from fixtures')
+
+def insert_row(conn, row):
+  gameday = row[0]
+  gamedate = row[1]
+  gametime  = row[2]
+  hometeam = row[3]
+  awayteam = row[4]
+  homescore = row[5]
+  awayscore = row[6]
+  result = row[7]
+
+  sql = f'''insert into fixtures(gameday, gamedate, gametime, hometeam, awayteam, homescore, awayscore, result)
+           values ('{gameday}', '{gamedate}', '{gametime}', '{hometeam}', '{awayteam}', '{homescore}', '{awayscore}', '{result}')'''
+
+  run_sql(conn, sql)
+
+
 ################
 # Start
 ################
@@ -225,6 +252,10 @@ json_file_path = 'output/fixtures.json'
 html_file_path = 'output/fixtures.html'
 xlsx_file_path = 'output/fixtures' + datetime.now().strftime('%Y%m%d%H%M%S') + '.xlsx'
 
+# database
+conn = sqlite3.connect('database/fixtures.db')
+drop_database(conn)
+
 if os.path.exists(json_file_path) == True and is_stale(json_file_path) == False:
   print("Loading from file...")
   with open(json_file_path) as f:
@@ -233,7 +264,8 @@ else:
   print("Loading form Web...")
   json_data = request_new_data(json_file_path)
 
-process_fixtures(json_data, xlsx_file_path)
+process_fixtures(json_data, xlsx_file_path, conn)
 build_html(json_data, html_file_path)
+conn.close()
 
 
