@@ -210,7 +210,6 @@ def process_fixtures(json_data, xlsx_file_path, conn):
   wb.save(xlsx_file_path)
 
 def run_sql(conn, sql):
-  print(sql)
   c = conn.cursor()
   c.execute(sql)
   conn.commit()
