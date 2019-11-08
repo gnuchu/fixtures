@@ -256,11 +256,9 @@ conn = sqlite3.connect('database/fixtures.db')
 drop_database(conn)
 
 if os.path.exists(json_file_path) == True and is_stale(json_file_path) == False:
-  print("Loading from file...")
   with open(json_file_path) as f:
     json_data = json.load(f)
 else:
-  print("Loading form Web...")
   json_data = request_new_data(json_file_path)
 
 process_fixtures(json_data, xlsx_file_path, conn)
