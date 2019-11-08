@@ -1,6 +1,9 @@
 # TODO
 
+- Classify
 - Add storing each row to a database
 - Start running via cron on server once a day
 - Email any errors to admin
 - When new fixtures are available send out a new spreadsheet
+- Email evey Tuesday with the next 4 games dates and times. Deadline for ticket requests etc. 
+
