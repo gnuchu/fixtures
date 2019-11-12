@@ -7,5 +7,6 @@ create table fixtures(
   awayteam not null,
   homescore int,
   awayscore int,
-  result text
+  result text,
+  fixture_id text
 );

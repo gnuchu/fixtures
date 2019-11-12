@@ -60,6 +60,8 @@ def build_html(json, outputfile):
     homescore = row[5]
     awayscore = row[6]
     result = row[7]
+    fixture_id = row[9]
+
     if result == 'Win':
       currentpoints += 3
     elif result == 'Draw':
@@ -69,7 +71,7 @@ def build_html(json, outputfile):
       currentpoints = ''
 
     htmlrow = f"""<tr>
-      <td>{gameday}</td>
+      <td>{gameday}<br/><small>{fixture_id}</small></td>
       <td>{hometeam}</td>
       <td>{homescore}</td>
       <td>{awayscore}</td>
@@ -154,6 +156,7 @@ def process_fixture(gameday, fixture, currentpoints):
   date_o = datetime.fromisoformat(matchdate)
   date_str = date_o.strftime("%d/%m/%Y")
   time_str = date_o.strftime("%H:%M:%S")
+  fixture_id = fixture['fixture_id']
 
   if fixture['score']['fulltime'] == None:
     homescore = ""
@@ -164,12 +167,13 @@ def process_fixture(gameday, fixture, currentpoints):
     (homescore,awayscore) = score.split('-')
     homeoraway = home_or_away(fixture)
     result = calculate_result(homescore, awayscore, homeoraway)
+
     if result == 'Draw':
       currentpoints += 1
     elif result == 'Win':
       currentpoints += 3
   
-  row = [gameday, date_str, time_str, hometeam, awayteam, homescore, awayscore, result, currentpoints]
+  row = [gameday, date_str, time_str, hometeam, awayteam, homescore, awayscore, result, currentpoints, fixture_id]
   return row
 
 def request_new_data(json_file_path):
@@ -226,9 +230,10 @@ def insert_row(conn, row):
   homescore = row[5]
   awayscore = row[6]
   result = row[7]
+  fixture_id = row[9]
 
-  sql = f'''insert into fixtures(gameday, gamedate, gametime, hometeam, awayteam, homescore, awayscore, result)
-           values ('{gameday}', '{gamedate}', '{gametime}', '{hometeam}', '{awayteam}', '{homescore}', '{awayscore}', '{result}')'''
+  sql = f'''insert into fixtures(gameday, gamedate, gametime, hometeam, awayteam, homescore, awayscore, result, fixture_id)
+           values ('{gameday}', '{gamedate}', '{gametime}', '{hometeam}', '{awayteam}', '{homescore}', '{awayscore}', '{result}', '{fixture_id}')'''
 
   run_sql(conn, sql)
 
