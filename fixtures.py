@@ -40,6 +40,7 @@ def read_templates():
 def build_ical(json, outputfile):
 
   cal = Calendar()
+  cal['summary'] = "St. Pauli fixtures 2019/2010"
 
   for fixture in json_data['api']['fixtures']:
     league_id = int(fixture['league_id'])
@@ -54,10 +55,11 @@ def build_ical(json, outputfile):
     gametime = row[2]
     hometeam = row[3]
     awayteam = row[4]
+    competition = row[10]
 
     event = Event()
     event['dtstart'] = createTdate(gamedate, gametime)
-    event['summary'] = f"{hometeam} v. {awayteam}"
+    event['summary'] = f"{hometeam} v. {awayteam} ({competition})"
     event['dtend'] = createTdate(gamedate, gametime, additionalHours=2)
 
     cal.add_component(event)
@@ -110,6 +112,7 @@ def build_html(json, outputfile):
     awayscore = row[6]
     result = row[7]
     fixture_id = row[9]
+    competition = row[10]
 
     if result == 'Win':
       currentpoints += 3
@@ -120,7 +123,7 @@ def build_html(json, outputfile):
       currentpoints = ''
 
     htmlrow = f"""<tr>
-      <td>{gameday}<br/><small>{fixture_id}</small></td>
+      <td>{gameday}<br/><small>{fixture_id}</small><br/><small>{competition}</small></td>
       <td>{hometeam}</td>
       <td>{homescore}</td>
       <td>{awayscore}</td>
@@ -206,6 +209,7 @@ def process_fixture(gameday, fixture, currentpoints):
   date_str = date_o.strftime("%d/%m/%Y")
   time_str = date_o.strftime("%H:%M:%S")
   fixture_id = fixture['fixture_id']
+  competition = fixture['league']['name']
 
   if fixture['score']['fulltime'] == None:
     homescore = ""
@@ -222,7 +226,7 @@ def process_fixture(gameday, fixture, currentpoints):
     elif result == 'Win':
       currentpoints += 3
   
-  row = [gameday, date_str, time_str, hometeam, awayteam, homescore, awayscore, result, currentpoints, fixture_id]
+  row = [gameday, date_str, time_str, hometeam, awayteam, homescore, awayscore, result, currentpoints, fixture_id, competition]
   return row
 
 def request_new_data(json_file_path):
