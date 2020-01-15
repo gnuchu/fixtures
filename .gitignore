@@ -4,3 +4,5 @@ fixtures.csv
 fixtures.xlsx
 fixtures.json
 output/fixture*
+
+__pycache__/*

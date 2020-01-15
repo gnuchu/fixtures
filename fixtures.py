@@ -10,6 +10,7 @@ from openpyxl import Workbook
 import sqlite3
 import yaml
 import sys
+from icalendar import Calendar, Event
 
 ################
 # Functions
@@ -35,6 +36,54 @@ def read_templates():
   templates['thead'] = thead
   templates['tfoot'] = tfoot
   return templates
+
+def build_ical(json, outputfile):
+
+  cal = Calendar()
+
+  for fixture in json_data['api']['fixtures']:
+    league_id = int(fixture['league_id'])
+    if league_id != 755:
+      continue
+  
+    currentpoints = 0
+    i = 0
+
+    row = process_fixture(i, fixture, currentpoints)
+    gamedate = row[1]
+    gametime = row[2]
+    hometeam = row[3]
+    awayteam = row[4]
+
+    event = Event()
+    event['dtstart'] = createTdate(gamedate, gametime)
+    event['summary'] = f"{hometeam} v. {awayteam}"
+    event['dtend'] = createTdate(gamedate, gametime, additionalHours=2)
+
+    cal.add_component(event)
+  
+  f = open(outputfile, "wb")
+  f.write(cal.to_ical())
+  f.close()
+
+def createTdate(date, time, additionalHours=0):
+  # Date in text in form: dd/mm/yyyy
+  # Time in format: 00:00:00
+  d = date.replace("/", "")
+  day = d[0:2]
+  month = d[2:4]
+  year = d[4:]
+  returndate = year + month + day
+
+  returntime = time.replace(":", "")
+  if additionalHours > 0:
+    hours = str(int(returntime[0:2]) + additionalHours)
+    mins = returntime[2:]
+    returntime = hours + mins
+
+  return f"{returndate}T{returntime}"
+
+
 
 def build_html(json, outputfile):
   templates = read_templates()
@@ -254,6 +303,7 @@ api_key = secrets['api_key']
 
 json_file_path = 'output/fixtures.json'
 html_file_path = 'output/fixtures.html'
+ical_file_path = 'output/fixtures.ics'
 xlsx_file_path = 'output/fixtures' + datetime.now().strftime('%Y%m%d%H%M%S') + '.xlsx'
 
 # database
@@ -268,6 +318,7 @@ else:
 
 process_fixtures(json_data, xlsx_file_path, conn)
 build_html(json_data, html_file_path)
+build_ical(json_data, ical_file_path)
 conn.close()
 
 
