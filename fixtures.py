@@ -41,6 +41,8 @@ def build_ical(json, outputfile):
 
   cal = Calendar()
   cal['summary'] = "St. Pauli fixtures 2019/2010"
+  cal['X-WR-CALNAME'] = "St. Pauli Fixures"
+  cal['X-WR-TIMEZONE'] = "Europe/Berlin"
 
   for fixture in json_data['api']['fixtures']:
     league_id = int(fixture['league_id'])
