@@ -306,9 +306,9 @@ secrets_file_path = '.secrets.yaml'
 secrets = load_secrets(secrets_file_path)
 api_key = secrets['api_key']
 
-json_file_path = 'output/fixtures.json'
-html_file_path = 'output/fixtures.html'
-ical_file_path = 'output/fixtures.ics'
+json_file_path = 'output/fixtures-2020.json'
+html_file_path = 'output/fixtures-2020.html'
+ical_file_path = 'output/fixtures-2020.ics'
 xlsx_file_path = 'output/fixtures' + datetime.now().strftime('%Y%m%d%H%M%S') + '.xlsx'
 
 # database
