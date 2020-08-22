@@ -45,7 +45,7 @@ def build_ical(json, outputfile):
 
   for fixture in json_data['api']['fixtures']:
     league_id = int(fixture['league_id'])
-    if league_id != 755:
+    if league_id != 2743:
       continue
   
     currentpoints = 0
@@ -98,7 +98,7 @@ def build_html(json, outputfile):
 
   for fixture in json_data['api']['fixtures']:
     league_id = int(fixture['league_id'])
-    if league_id != 755:
+    if league_id != 2743:
       continue
     
     i += 1
@@ -257,7 +257,7 @@ def process_fixtures(json_data, xlsx_file_path, conn):
 
   for fixture in json_data['api']['fixtures']:
     league_id = int(fixture['league_id'])
-    if league_id != 755:
+    if league_id != 2743:
       continue
 
     i += 1
