@@ -11,6 +11,7 @@ import sqlite3
 import yaml
 import sys
 from icalendar import Calendar, Event
+import constant
 
 ################
 # Functions
@@ -45,7 +46,7 @@ def build_ical(json, outputfile):
 
   for fixture in json_data['api']['fixtures']:
     league_id = int(fixture['league_id'])
-    if league_id != 2743:
+    if league_id != constant.LEAGUE_ID:
       continue
   
     currentpoints = 0
@@ -98,7 +99,7 @@ def build_html(json, outputfile):
 
   for fixture in json_data['api']['fixtures']:
     league_id = int(fixture['league_id'])
-    if league_id != 2743:
+    if league_id != constant.LEAGUE_ID:
       continue
     
     i += 1
@@ -257,7 +258,7 @@ def process_fixtures(json_data, xlsx_file_path, conn):
 
   for fixture in json_data['api']['fixtures']:
     league_id = int(fixture['league_id'])
-    if league_id != 2743:
+    if league_id != constant.LEAGUE_ID:
       continue
 
     i += 1
