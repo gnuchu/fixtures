@@ -44,9 +44,9 @@ def build_html(json, outputfile):
   currentpoints = 0
   i = 0
 
-  for fixture in json_data['api']['fixtures']:
-    league_id = int(fixture['league_id'])
-    if league_id != 755:
+  for fixture in json_data['response']:
+    league_id = int(fixture['league']['id'])
+    if league_id != 79:
       continue
     
     i += 1
@@ -81,6 +81,8 @@ def build_html(json, outputfile):
       <td>{result}</td>
       <td>{currentpoints}</td>
     </tr>"""
+
+    print(html)
     html+=htmlrow
 
   html += templates['tfoot']
@@ -108,7 +110,10 @@ def is_stale(file):
     return True
   
   lastModifiedDatetime = get_modified_time(file)
-  staleDate = datetime.now() + timedelta(hours=-1)
+  if DEBUG:
+    staleDate = datetime.now()
+  else:
+    staleDate = datetime.now() + timedelta(hours=-1)
 
   if lastModifiedDatetime < staleDate:
     return True
@@ -149,29 +154,40 @@ def home_or_away(fixture):
     return 'A'
 
 def process_fixture(gameday, fixture, currentpoints):
-  matchdate = fixture['event_date']
-  hometeam = fixture['homeTeam']['team_name']
-  awayteam = fixture['awayTeam']['team_name']
+  matchdate = fixture['fixture']['date']
+  hometeam = fixture['teams']['home']['name']
+  awayteam = fixture['teams']['away']['name']
   
   date_o = datetime.fromisoformat(matchdate)
+  date_o = date_o + timedelta(hours=1)
   date_str = date_o.strftime("%d/%m/%Y")
   time_str = date_o.strftime("%H:%M:%S")
-  fixture_id = fixture['fixture_id']
+
+  if time_str=='01:00:00':
+    date_str = 'Weekend of ' + date_str
+    time_str = 'TBD'
+
+  fixture_id = fixture['fixture']['id']
 
   if fixture['score']['fulltime'] == None:
     homescore = ""
     awayscore = ""
     result = ""
   else:
-    score = fixture['score']['fulltime']
-    (homescore,awayscore) = score.split('-')
-    homeoraway = home_or_away(fixture)
-    result = calculate_result(homescore, awayscore, homeoraway)
+    homescore = fixture['score']['fulltime']['home']
+    awayscore = fixture['score']['fulltime']['away']
 
-    if result == 'Draw':
-      currentpoints += 1
-    elif result == 'Win':
-      currentpoints += 3
+    if(homescore == None or awayscore==None):
+      result = ""
+    else: 
+      homeoraway = 'FIX'
+      result = calculate_result(homescore, awayscore, homeoraway)
+
+      if result == 'Draw':
+        currentpoints += 1
+      elif result == 'Win':
+        currentpoints += 3
+  
   
   row = [gameday, date_str, time_str, hometeam, awayteam, homescore, awayscore, result, currentpoints, fixture_id]
   return row
@@ -181,8 +197,12 @@ def request_new_data(json_file_path):
   headers['x-rapidapi-host'] = api_host
   headers['x-rapidapi-key'] = api_key
 
-  url_to_get = api_base_url + api_service + st_pauli_team_id
-  response = requests.request(api_method, url_to_get, headers=headers)
+  url_to_get = api_base_url + api_service
+  print(url_to_get)
+  print(headers)
+  print(querystring)
+
+  response = requests.request(api_method, url_to_get, headers=headers, params=querystring)
   j = json.loads(response.text)
   # Save the data off just in case
   f = open(json_file_path, 'w')
@@ -201,9 +221,9 @@ def process_fixtures(json_data, xlsx_file_path, conn):
   #Write headers
   ws.append(['Game Day', 'Date', 'Time', 'Home', 'Away', 'Home Score', 'Away Score', 'Points'])
 
-  for fixture in json_data['api']['fixtures']:
-    league_id = int(fixture['league_id'])
-    if league_id != 755:
+  for fixture in json_data['response']:
+    league_id = int(fixture['league']['id'])
+    if league_id != 79:
       continue
 
     i += 1
@@ -241,12 +261,15 @@ def insert_row(conn, row):
 ################
 # Start
 ################
+DEBUG=1
 json_data = {}
 api_host = 'api-football-v1.p.rapidapi.com'
 api_method = 'GET'
-api_base_url = 'https://api-football-v1.p.rapidapi.com/v2'
-api_service = '/fixtures/team/'
+api_base_url = 'https://api-football-v1.p.rapidapi.com/v3'
+api_service = '/fixtures'
 st_pauli_team_id = '186'
+season = '2021'
+querystring = {'season':f"{season}",'team':f"{st_pauli_team_id}"}
 
 secrets_file_path = '.secrets.yaml'
 secrets = load_secrets(secrets_file_path)

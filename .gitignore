@@ -4,3 +4,4 @@ fixtures.csv
 fixtures.xlsx
 fixtures.json
 output/fixture*
+.venv
